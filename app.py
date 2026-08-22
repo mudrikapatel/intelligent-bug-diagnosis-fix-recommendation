@@ -1,16 +1,13 @@
 import streamlit as st
 import requests
 import os
-BACKEND_URL = os.getenv(
-    "BACKEND_URL",
-    "http://127.0.0.1:8000"
-)
 import pandas as pd
 import json
 import io
 
 from datetime import datetime
 
+BACKEND_URL = "http://127.0.0.1:8000/analyze"
 # ---------------------------------------------------------
 # OPTIONAL PDF SUPPORT
 # ---------------------------------------------------------
@@ -49,8 +46,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-BACKEND_URL = "https://YOUR-FASTAPI-URL.fastapicloud.dev/analyze"
-
+BACKEND_URL = "http://127.0.0.1:8000/analyze"
 
 # =========================================================
 # SESSION STATE
