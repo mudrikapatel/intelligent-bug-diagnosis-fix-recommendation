@@ -1,74 +1,147 @@
 import re
 
+
 def analyze_log(text):
 
-    text_lower = text.lower()
-
     result = {
-        "exception": "Unknown",
-        "failure_point": "Unknown",
-        "code_path": "Unknown",
-        "message": text.strip()
+        "exception": "Not Found",
+        "error_message": "No error message detected",
+        "failure_point": "Not Found",
+        "class_name": "Unknown",
+        "method_name": "Unknown",
+        "line_number": "Unknown",
+        "stack_trace": [],
+        "severity": "Low",
+        "root_cause": "Unknown runtime failure",
+        "recommended_fix": "Review stack trace and debug failing module."
     }
 
-    # -----------------------
-    # Detect Exception
-    # -----------------------
 
-    if "nullpointerexception" in text_lower:
-        result["exception"] = "NullPointerException"
+    if not text:
+        return result
 
-    elif "sql" in text_lower:
+
+    # Exception / Error detection
+    match = re.search(
+        r'([A-Za-z]+(?:Exception|Error))',
+        text
+    )
+
+    if match:
+        result["exception"] = match.group(1)
+        result["severity"] = "High"
+        # Additional exception patterns
+
+    if "sql" in text.lower() or "database" in text.lower():
         result["exception"] = "SQLException"
+        result["severity"] = "High"
 
-    elif "timeout" in text_lower:
-        result["exception"] = "TimeoutException"
+    elif "sockettimeoutexception" in text.lower():
+        result["exception"] = "SocketTimeoutException"
+        result["severity"] = "High"
 
-    elif "index out of bounds" in text_lower:
-        result["exception"] = "IndexOutOfBoundsException"
 
-    elif "file not found" in text_lower:
-        result["exception"] = "FileNotFoundException"
+    # Error line
+    for line in text.splitlines():
 
-    elif "crash" in text_lower:
-        result["exception"] = "Runtime Crash"
+        if (
+            "error" in line.lower()
+            or "exception" in line.lower()
+            or "failed" in line.lower()
+        ):
 
-    elif "api" in text_lower and "500" in text_lower:
-        result["exception"] = "HTTP 500 Internal Server Error"
+            result["error_message"] = line.strip()
+            break
 
-    # -----------------------
-    # Failure Point
-    # -----------------------
 
-    if "login" in text_lower:
-        result["failure_point"] = "Login Module"
 
-    elif "database" in text_lower:
-        result["failure_point"] = "Database Layer"
+    # Java stack trace
+    java_trace = re.findall(
+        r'at\s+(.+?)\((.+?\.java):(\d+)\)',
+        text
+    )
 
-    elif "api" in text_lower:
-        result["failure_point"] = "API Endpoint"
 
-    elif "payment" in text_lower:
-        result["failure_point"] = "Payment Module"
+    for trace in java_trace:
 
-    elif "dashboard" in text_lower:
-        result["failure_point"] = "Dashboard"
+        result["stack_trace"].append(
+            f"at {trace[0]}({trace[1]}:{trace[2]})"
+        )
 
-    # -----------------------
-    # Code Path
-    # -----------------------
 
-    if "login" in text_lower:
-        result["code_path"] = "LoginService.authenticate()"
+    if java_trace:
 
-    elif "database" in text_lower:
-        result["code_path"] = "Database.connect()"
+        first = java_trace[0]
 
-    elif "api" in text_lower:
-        result["code_path"] = "APIController.handleRequest()"
+        result["failure_point"] = (
+            f"{first[1]} Line {first[2]}"
+        )
 
-    elif "payment" in text_lower:
-        result["code_path"] = "PaymentService.processPayment()"
+        result["line_number"] = first[2]
+
+
+        parts = first[0].split(".")
+
+
+        if len(parts) >= 2:
+
+            result["class_name"] = parts[-2]
+            result["method_name"] = parts[-1]
+
+
+
+    # Python traceback support
+    python_trace = re.findall(
+        r'File "(.+?)", line (\d+), in (.+)',
+        text
+    )
+
+
+    for trace in python_trace:
+
+        result["stack_trace"].append(
+            f"{trace[0]} Line {trace[1]} Method {trace[2]}"
+        )
+
+
+    if python_trace and result["failure_point"] == "Not Found":
+
+        result["failure_point"] = (
+            f"{python_trace[0][0]} Line {python_trace[0][1]}"
+        )
+
+
+
+    # Root cause
+    if result["exception"] == "NullPointerException":
+
+        result["root_cause"] = "Object reference is null"
+
+        result["recommended_fix"] = (
+            "Add null checks before accessing object"
+        )
+
+
+    elif result["exception"] != "Not Found":
+
+        result["root_cause"] = (
+            "Runtime exception detected"
+        )
+
+        result["recommended_fix"] = (
+            "Fix exception and validate input"
+        )
+
+
+    # If stack trace empty, show error lines
+    if len(result["stack_trace"]) == 0:
+
+        for line in text.splitlines():
+
+            if "error" in line.lower():
+
+                result["stack_trace"].append(line)
+
+
 
     return result
