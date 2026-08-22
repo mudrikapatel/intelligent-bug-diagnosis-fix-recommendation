@@ -1,4 +1,4 @@
-rom triage_rules import COMPONENTS, EXCEPTIONS, IMPACT
+from triage_rules import COMPONENTS, EXCEPTIONS, IMPACT
 def analyze_triage(text):
 
     text = text.lower()
