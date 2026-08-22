@@ -1110,3 +1110,8 @@ else:
         • Defect Pattern Analytics
         """
     )
+    app = Flask(__name__)
+# ... your code ...
+
+if __name__ == "__main__":
+    app.run()
