@@ -9,7 +9,9 @@ from sentence_transformers import SentenceTransformer
 # CONFIGURATION
 # =========================================================
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
 
 KB_PATH = os.path.join(
     BASE_DIR,
@@ -48,8 +50,10 @@ def _initialize():
                 exist_ok=True
             )
 
-            _chroma_client = chromadb.PersistentClient(
-                path=KB_PATH
+            _chroma_client = (
+                chromadb.PersistentClient(
+                    path=KB_PATH
+                )
             )
 
             _collection = (
@@ -90,6 +94,7 @@ def _create_document(bug):
         recommended_fix,
         list
     ):
+
         recommended_fix = " | ".join(
             str(x)
             for x in recommended_fix
@@ -114,6 +119,12 @@ Category:
 Component:
 {bug.get("component", "")}
 
+Severity:
+{bug.get("severity", "")}
+
+Priority:
+{bug.get("priority", "")}
+
 Error Message:
 {bug.get(
     "error_message",
@@ -122,6 +133,9 @@ Error Message:
 
 Stack Trace:
 {bug.get("stack_trace", "")}
+
+Failure Point:
+{bug.get("failure_point", "")}
 
 Root Cause:
 {bug.get(
@@ -148,10 +162,28 @@ def add_verified_bug(bug):
 
     _initialize()
 
+    # -----------------------------------------------------
+    # BASIC VALIDATION
+    # -----------------------------------------------------
+
+    if not bug:
+
+        return {
+            "success": False,
+            "message": "No bug data was provided."
+        }
+
+    # -----------------------------------------------------
+    # BUG ID
+    # -----------------------------------------------------
+
     bug_id = str(
         bug.get(
             "bug_id",
-            bug.get("id", "")
+            bug.get(
+                "id",
+                ""
+            )
         )
     ).strip()
 
@@ -162,20 +194,70 @@ def add_verified_bug(bug):
             "message": "Bug ID is required."
         }
 
-    if not bug.get(
+    # -----------------------------------------------------
+    # FIX VERIFICATION
+    # -----------------------------------------------------
+
+    if bug.get(
         "fix_verified",
         False
-    ):
+    ) is not True:
 
         return {
             "success": False,
             "message":
-            "Bug cannot be added because fix is not verified."
+                "Bug cannot be added because "
+                "the fix is not verified."
         }
+
+    # -----------------------------------------------------
+    # VERIFICATION STATUS
+    # -----------------------------------------------------
+
+    if bug.get(
+        "verification_status"
+    ) != "verified":
+
+        return {
+            "success": False,
+            "message":
+                "Bug cannot be added because "
+                "verification status is not 'verified'."
+        }
+
+    # -----------------------------------------------------
+    # CONFIRMED RESOLUTION
+    # -----------------------------------------------------
+
+    resolution = str(
+        bug.get(
+            "resolution",
+            bug.get(
+                "solution",
+                ""
+            )
+        )
+    ).strip()
+
+    if not resolution:
+
+        return {
+            "success": False,
+            "message":
+                "Confirmed resolution is required."
+        }
+
+    # -----------------------------------------------------
+    # CREATE DOCUMENT
+    # -----------------------------------------------------
 
     document = _create_document(
         bug
     )
+
+    # -----------------------------------------------------
+    # CREATE EMBEDDING
+    # -----------------------------------------------------
 
     embedding = (
         _embedding_model
@@ -183,56 +265,95 @@ def add_verified_bug(bug):
         .tolist()
     )
 
+    # -----------------------------------------------------
+    # METADATA
+    # -----------------------------------------------------
+
     metadata = {
 
-        "bug_id": bug_id,
+        "bug_id":
+            bug_id,
 
-        "title": str(
-            bug.get(
-                "title",
-                ""
-            )
-        ),
-
-        "component": str(
-            bug.get(
-                "component",
-                ""
-            )
-        ),
-
-        "category": str(
-            bug.get(
-                "category",
-                ""
-            )
-        ),
-
-        "root_cause": str(
-            bug.get(
-                "root_cause",
+        "title":
+            str(
                 bug.get(
-                    "cause",
+                    "title",
                     ""
                 )
-            )
-        ),
+            ),
 
-        "resolution": str(
-            bug.get(
-                "resolution",
+        "component":
+            str(
                 bug.get(
-                    "solution",
+                    "component",
                     ""
                 )
-            )
-        ),
+            ),
+
+        "category":
+            str(
+                bug.get(
+                    "category",
+                    ""
+                )
+            ),
+
+        "severity":
+            str(
+                bug.get(
+                    "severity",
+                    ""
+                )
+            ),
+
+        "priority":
+            str(
+                bug.get(
+                    "priority",
+                    ""
+                )
+            ),
+
+        "root_cause":
+            str(
+                bug.get(
+                    "root_cause",
+                    bug.get(
+                        "cause",
+                        ""
+                    )
+                )
+            ),
+
+        "resolution":
+            resolution,
+
+        "fix_verified":
+            "true",
+
+        "verification_status":
+            "verified",
+
+        "source":
+            str(
+                bug.get(
+                    "source",
+                    "human_verified"
+                )
+            ),
 
         "verified_at":
-            datetime.now().isoformat()
+            str(
+                bug.get(
+                    "verified_at",
+                    datetime.now().isoformat()
+                )
+            )
     }
 
-    # Check duplicate Bug ID
+    # -----------------------------------------------------
+    # DUPLICATE BUG ID CHECK
+    # -----------------------------------------------------
 
     existing = _collection.get(
         ids=[bug_id]
@@ -248,18 +369,29 @@ def add_verified_bug(bug):
         return {
             "success": False,
             "message":
-            f"Bug {bug_id} already exists in knowledge base."
+                f"Bug {bug_id} already exists "
+                "in knowledge base."
         }
+
+    # -----------------------------------------------------
+    # STORE IN CHROMADB
+    # -----------------------------------------------------
 
     _collection.add(
 
         ids=[bug_id],
 
-        documents=[document],
+        documents=[
+            document
+        ],
 
-        embeddings=[embedding],
+        embeddings=[
+            embedding
+        ],
 
-        metadatas=[metadata]
+        metadatas=[
+            metadata
+        ]
     )
 
     return {
@@ -267,7 +399,7 @@ def add_verified_bug(bug):
         "success": True,
 
         "message":
-        f"Bug {bug_id} added to knowledge base."
+            f"Bug {bug_id} added to knowledge base."
     }
 
 
@@ -292,10 +424,22 @@ def search_knowledge_base(
 
         return []
 
-    top_k = min(
-        int(top_k),
-        total
-    )
+    try:
+
+        top_k = min(
+            max(
+                1,
+                int(top_k)
+            ),
+            total
+        )
+
+    except Exception:
+
+        top_k = min(
+            5,
+            total
+        )
 
     embedding = (
         _embedding_model
@@ -348,8 +492,7 @@ def search_knowledge_base(
             else 1.0
         )
 
-        # Chroma distance -> approximate similarity
-
+        # Approximate similarity score
         similarity = max(
             0,
             min(
