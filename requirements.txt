@@ -13,6 +13,3 @@ chromadb
 sentence-transformers
 flask
 requests
-torch
-torchvision
-transformers
