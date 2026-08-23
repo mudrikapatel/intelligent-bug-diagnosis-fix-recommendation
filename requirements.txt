@@ -9,3 +9,4 @@ PyPDF2
 streamlit
 openai
 plotly
+chromadb
