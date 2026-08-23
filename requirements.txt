@@ -6,3 +6,6 @@ numpy
 scikit-learn
 faiss-cpu
 PyPDF2
+streamlit
+openai
+plotly
