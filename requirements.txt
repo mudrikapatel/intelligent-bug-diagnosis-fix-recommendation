@@ -11,3 +11,4 @@ openai
 plotly
 chromadb
 sentence-transformers
+flask
