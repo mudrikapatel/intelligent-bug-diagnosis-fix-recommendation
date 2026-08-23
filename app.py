@@ -5,14 +5,14 @@ import os
 import pandas as pd
 import json
 import io
-
 from datetime import datetime
 
-BACKEND_URL = "http://127.0.0.1:8000/analyze"
+# --- CLOUD COMPATIBLE BACKEND URL ---
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000/analyze")
+
 # ---------------------------------------------------------
 # OPTIONAL PDF SUPPORT
 # ---------------------------------------------------------
-
 try:
     from pypdf import PdfReader
     PDF_AVAILABLE = True
@@ -20,26 +20,21 @@ except ImportError:
     PdfReader = None
     PDF_AVAILABLE = False
 
-
 # ---------------------------------------------------------
 # PROJECT MODULES
 # ---------------------------------------------------------
-
 from defect_analytics import (
     analytics_dashboard,
     save_bug_analysis
 )
-
 from knowledge_base import (
     update_knowledge_base,
     get_knowledge_base_stats
 )
 
-
 # =========================================================
 # CONFIGURATION
 # =========================================================
-
 st.set_page_config(
     page_title="Intelligent Bug Diagnosis Platform | Group 1",
     page_icon="🐞",
@@ -47,7 +42,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-BACKEND_URL = "http://127.0.0.1:8000/analyze"
+# --- Yaha se FastAPI wala blocking check HATA DO ---
+# Jo bhi niche is tarah ka code hai usko delete kar do:
+# try:
+#   requests.get("http://127.0.0.1:8000")
+# except:
+#   st.error("❌ Cannot connect to FastAPI backend.")
+#   st.stop()
 
 # =========================================================
 # SESSION STATE
