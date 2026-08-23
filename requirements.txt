@@ -12,3 +12,4 @@ plotly
 chromadb
 sentence-transformers
 flask
+requests
