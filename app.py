@@ -8,7 +8,7 @@ import io
 from datetime import datetime
 
 # --- CLOUD COMPATIBLE BACKEND URL ---
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000/analyze")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://intelligent-bug-diagnosis-fix-recommendation.onrender.com/analyze")
 
 # ---------------------------------------------------------
 # OPTIONAL PDF SUPPORT
