@@ -30,7 +30,7 @@ def home():
 
     return {
         "status": "AI Bug Analyzer Running",
-        "project": "Intelligent Bug Diagnosis Platform",
+        "project": "Creation of Intelligent Bug Diagnosis Platform",
         "group": "Group 1",
         "version": "3.0"
     }
