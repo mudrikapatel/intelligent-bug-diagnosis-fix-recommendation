@@ -36,7 +36,7 @@ from knowledge_base import (
 # CONFIGURATION
 # =========================================================
 st.set_page_config(
-    page_title="Intelligent Bug Diagnosis Platform | Group 1",
+    page_title="Creation of Intelligent Bug Diagnosis Platform Group 1",
     page_icon="🐞",
     layout="wide",
     initial_sidebar_state="expanded"
